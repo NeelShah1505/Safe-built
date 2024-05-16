@@ -1,3 +1,7 @@
 service: () -> {
-    greet: (text) -> (text) query;
+    getFileAccessLog: () -> (vec text) query;
+    login: (record {id:text; pw:text}) -> (bool) query;
+    readFile: (text, text) -> (opt record {title:text; contents:text});
+    register: (record {id:text; pw:text}) -> (bool);
+    uploadFile: (record {title:text; contents:text}, text) -> (bool);
 }
