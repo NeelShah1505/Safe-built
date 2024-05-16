@@ -1,0 +1,38 @@
+{
+  "canisters": {
+    "BlockHero_backend": {
+      "build": "npx azle BlockHero_backend",
+      "candid": "src/BlockHero_backend/BlockHero_backend.did",
+      "gzip": true,
+      "main": "src/BlockHero_backend/src/index.ts",
+      "tech_stack": {
+        "cdk": {
+          "azle": {}
+        },
+        "language": {
+          "typescript": {}
+        }
+      },
+      "type": "custom",
+      "wasm": ".azle/BlockHero_backend/BlockHero_backend.wasm"
+    },
+    "BlockHero_frontend": {
+      "dependencies": [
+        "BlockHero_backend"
+      ],
+      "source": [
+        "src/BlockHero_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "BlockHero_frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
