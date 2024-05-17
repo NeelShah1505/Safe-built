@@ -88,7 +88,7 @@ export default Canister({
         if (!fileMap.containsKey(fileTitle) || !userMap.containsKey(userHash)) {
             return None
         }
-        if (fileMap.get(fileTitle).Some!.auth < userMap.get(userHash).Some!.auth) {
+        if (fileMap.get(fileTitle).Some!.auth <= userMap.get(userHash).Some!.auth) {
             return None
         }
         addFileAccessLog(fileTitle, userHashElement)
