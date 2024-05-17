@@ -15,5 +15,8 @@
   "workspaces": [
     "src/icp-make-canister-backend",
     "src/icp-make-canister-frontend"
-  ]
+  ],
+  "dependencies": {
+    "js-sha256": "^0.11.0"
+  }
 }

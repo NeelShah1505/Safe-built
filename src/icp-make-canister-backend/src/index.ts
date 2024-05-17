@@ -17,74 +17,83 @@ import {
     Void
 } from 'azle';
 
-const Key = nat8;
-type Key = typeof Key.tsType;
-
-const Value = text;
-type Value = typeof Value.tsType;
-
-let map = StableBTreeMap<Key, Value>(0);
-
-//================================================
-
-
-const File = Record({
-    title : text,
-    contents : text 
-});
-type File = typeof File.tsType;
-
-let fileMap = StableBTreeMap<text, File>(0);
-
 const User = Record({
     id : text,
-    pw : text
+    pw : text,
+    auth : nat8
 });
 type User = typeof User.tsType;
 
+const File = Record({
+    index : nat64,
+    title : text,
+    contents : text,
+    auth : nat8
+});
+type File = typeof File.tsType;
+
+const ROOT_AUTH : nat8 = 0;
+const FIRST_AUTH : nat8 = 1;
+const SECOND_AUTH : nat8 = 2;
+const THIRD_AUTH : nat8 = 3;
+
 let userMap = StableBTreeMap<text, User>(0);
 
-let fileAccessLog : Vec<text> = [];
+let fileMap = StableBTreeMap<text, File>(0);
 
-
+let fileAccessLogs : Vec<text> = [];
 
 let logIndex: nat64 = 0n;
 
+let fileIndex: nat64 = 0n;
+
 export default Canister({
-    uploadFile: update([File, text], bool, (file, userId) => {
+
+    uploadFile: update([text, text, nat8, text], bool, (fileTitle, fileContents, fileAuth, userId) => {
         if (!userMap.containsKey(userId)) {
             return false
         }
-        if (!fileMap.containsKey(file.title)) {
-            fileMap.insert(file.title, file);
+        if (!fileMap.containsKey(fileTitle)) {
+            let file : File = {index : fileIndex, title : fileTitle, contents : fileContents, auth : fileAuth};
+            fileIndex += 1n;
+            fileMap.insert(fileTitle, file);
             return true
         }
         return false
     }),
+
     readFile: update([text, text], Opt(File), (title, userId) => {
-        if (!userMap.containsKey(userId)) {
+        if (fileMap.get(title) == None || userMap.get(userId) == None) {
             return None
         }
-        if (fileMap.get(title) != None) {
-            fileAccessLog.push(`${logIndex} ${userId} read ${title}`);
-            logIndex += 1n;
+        if (fileMap.get(title).Some!.auth < userMap.get(userId).Some!.auth) {
+            return None
         }
+        const now = Date.now();
+        fileAccessLogs.push(`${now} | ${logIndex} | ${userId} read ${title}`);
+        logIndex += 1n;
         return fileMap.get(title)
     }),
-    getFileAccessLog: query([], Vec(text), () => {
-        return fileAccessLog
+
+    getFileAccessLogs: query([], Vec(text), () => {
+        return fileAccessLogs
     }),
-    register: update([User], bool, (user) => {
+
+    registerUser: update([User], bool, (user) => {
+        if (user.auth < ROOT_AUTH || user.auth > THIRD_AUTH) {
+            return false
+        }
         if (!userMap.containsKey(user.id)) {
             userMap.insert(user.id, user);
             return true
         };
         return false
     }),
-    login: query([User], bool, (user) => {
-        if (userMap.containsKey(user.id)) {
-            let u = userMap.get(user.id);
-            if (u.Some?.pw == user.pw) {
+
+    login: query([text, text], bool, (userId, userPw) => {
+        if (userMap.containsKey(userId)) {
+            let u = userMap.get(userId);
+            if (u.Some?.pw == userPw) {
                 return true
             } else {
                 return false

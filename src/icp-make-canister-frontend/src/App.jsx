@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { icp_make_canister_backend } from 'declarations/icp-make-canister-backend';
-
-
+import { sha256, sha224 } from 'js-sha256';
+import { Nat8 } from '@dfinity/candid/lib/cjs/idl';
 
 
 function App() {
@@ -16,8 +16,9 @@ function App() {
     event.preventDefault();
     const userId = event.target.elements.register_id.value;
     const userPw = event.target.elements.register_pw.value;
-    icp_make_canister_backend.register({id: userId, pw: userPw}).then((isRegistered) => {
-      setMessage(`user is registered? : ${isRegistered}`);
+    const userAuth = event.target.elements.register_auth.valueAsNumber;
+    icp_make_canister_backend.registerUser({id: userId, pw: userPw, auth: userAuth}).then((isRegistered) => {
+      setMessage(`${userId} user is registered? : ${isRegistered}`);
     });
     return false;
   };
@@ -26,7 +27,8 @@ function App() {
     event.preventDefault();
     const userId = event.target.elements.login_id.value;
     const userPw = event.target.elements.login_pw.value;
-    icp_make_canister_backend.login({id: userId, pw: userPw}).then((isLogin) => {
+    console.log("hash :", sha256(userId));
+    icp_make_canister_backend.login(userId, userPw).then((isLogin) => {
       if (isLogin){
         setUserId(userId)
       } else {
@@ -40,8 +42,9 @@ function App() {
     event.preventDefault();
     const fileTitle = event.target.elements.upload_file_title.value;
     const fileContents = event.target.elements.upload_file_contents.value;
+    const fileAuth = event.target.elements.upload_file_auth.valueAsNumber;
     if (isLogin) {
-      icp_make_canister_backend.uploadFile({title: fileTitle, contents: fileContents}, userId).then((isUploaded) => {
+      icp_make_canister_backend.uploadFile(fileTitle, fileContents, fileAuth, userId).then((isUploaded) => {
         console.log("isUploaded? ",isUploaded )
       });
     };
@@ -57,11 +60,13 @@ function App() {
           console.log("file",file);
           setFileContents(file[0].contents);
         } else {
-          setFileContents('');
+          // console.log("can't read file")
+          setFileContents("can't read file");
         }
       });
     } else {
-      console.log("can't read file")
+      setFileContents("can't read file");
+      // console.log("can't read file")
     }
   };
 
@@ -81,9 +86,11 @@ function App() {
           <input id="register_id" alt="ID" type="text" />
           <label htmlFor="register_pw">PW : &nbsp;</label>
           <input id="register_pw" alt="PW" type="text" />
+          <label htmlFor="register_auth">AUTH : &nbsp;</label>
+          <input id="register_auth" alt="AUTH" type="number" min="0" max="3"/>
           <button type="submit">REGISTER</button>
         </form>
-        <section id="message">{message}</section>
+        <section id="message">message : {message}</section>
       </div>
       <div>
         <p>{`User Login? ${isLogin} User Id? ${userId}`}</p>
@@ -102,6 +109,8 @@ function App() {
           <input id="upload_file_title" alt="Title" type="text" />
           <label htmlFor="upload_file_contents">Contents : &nbsp;</label>
           <input id="upload_file_contents" alt="Contents" type="text" />
+          <label htmlFor="upload_file_auth">AUTH : &nbsp;</label>
+          <input id="upload_file_auth" alt="AUTH" type="number" min="0" max="3"/>
           <button type="submit">UPLOAD</button>
         </form>
       </div>
