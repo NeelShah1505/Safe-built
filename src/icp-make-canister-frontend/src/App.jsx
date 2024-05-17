@@ -13,6 +13,7 @@ function App() {
   const [fileContents, setFileContents] = useState('');
   const [identity, setIdentity] = useState('');
   const [isIdentityLogin, setIsIdentityLogin] = useState(false);
+  const [fileAccessLogs, setFileAccessLogs] = useState([""]);
 
   async function authenticate() {
     const authClient = await AuthClient.create();
@@ -101,6 +102,14 @@ function App() {
     }
   };
 
+  function getFileAccessLogs() {
+    icp_make_canister_backend.getFileAccessLogs().then((logs) => {
+      console.log("logs :", logs)
+      setFileAccessLogs(logs);
+    });
+
+  }
+
   
   // async function callCanister(identity) {
   //   const agent = new HttpAgent({ identity });
@@ -168,6 +177,13 @@ function App() {
               <button type="submit">READ</button>
             </form>
             <section id="file_contents">{`File contents: ${fileContents}`}</section>
+          </div>
+          <div className="form-section">
+            <h2>File Access Logs</h2>
+            <button className="auth-button" onClick={getFileAccessLogs}>View File Access Logs</button>
+            {fileAccessLogs.map((log)=>{
+              return <p>{log}</p>
+            })}
           </div>
         </div>
         : 
