@@ -16,13 +16,21 @@ import {
     None,
     Void
 } from 'azle';
+import { sha256, sha224 } from 'js-sha256';
+
 
 const User = Record({
-    id : text,
-    pw : text,
+    userHash : text,
     auth : nat8
 });
 type User = typeof User.tsType;
+
+const UserHashElement = Record({
+    identity : text,
+    userId : text,
+    userPw : text
+})
+type UserHashElement = typeof UserHashElement.tsType;
 
 const File = Record({
     index : nat64,
@@ -47,10 +55,23 @@ let logIndex: nat64 = 0n;
 
 let fileIndex: nat64 = 0n;
 
-export default Canister({
+function addFileAccessLog(title : text, userHashElement: UserHashElement) {
+    const now = Date.now();
+    fileAccessLogs.push(`${now.toLocaleString()} | Log #${logIndex} | UserID: ${userHashElement.userId} accessed file: ${title}`);
+    logIndex += 1n;
+}
 
-    uploadFile: update([text, text, nat8, text], bool, (fileTitle, fileContents, fileAuth, userId) => {
-        if (!userMap.containsKey(userId)) {
+function getUserHash(userHashElement: UserHashElement) : text{
+    let userIdHash = sha256(userHashElement.userId + userHashElement.identity)
+    let userPwHash = sha256(userHashElement.userPw + userHashElement.identity)
+    let userHash = sha256(userIdHash + userPwHash)
+    return userHash
+}
+
+export default Canister({
+    uploadFile: update([text, text, nat8, UserHashElement], bool, (fileTitle, fileContents, fileAuth, userHashElement) => {
+        let userHash = getUserHash(userHashElement)
+        if (!userMap.containsKey(userHash)) {
             return false
         }
         if (!fileMap.containsKey(fileTitle)) {
@@ -62,45 +83,42 @@ export default Canister({
         return false
     }),
 
-    readFile: update([text, text], Opt(File), (title, userId) => {
-        if (fileMap.get(title) == None || userMap.get(userId) == None) {
+    readFile: update([text, UserHashElement], Opt(File), (fileTitle, userHashElement) => {
+        let userHash = getUserHash(userHashElement)
+        if (!fileMap.containsKey(fileTitle) || !userMap.containsKey(userHash)) {
             return None
         }
-        if (fileMap.get(title).Some!.auth < userMap.get(userId).Some!.auth) {
+        if (fileMap.get(fileTitle).Some!.auth < userMap.get(userHash).Some!.auth) {
             return None
         }
-        const now = Date.now();
-        fileAccessLogs.push(`${now} | ${logIndex} | ${userId} read ${title}`);
-        logIndex += 1n;
-        return fileMap.get(title)
+        addFileAccessLog(fileTitle, userHashElement)
+        return fileMap.get(fileTitle)
     }),
 
     getFileAccessLogs: query([], Vec(text), () => {
         return fileAccessLogs
     }),
 
-    registerUser: update([User], bool, (user) => {
-        if (user.auth < ROOT_AUTH || user.auth > THIRD_AUTH) {
+    registerUser: update([UserHashElement, nat8], bool, (userHashElement, auth) => {
+        let userHash = getUserHash(userHashElement)
+        let user : User = {userHash : userHash, auth : auth}
+
+        if (auth < ROOT_AUTH || auth > THIRD_AUTH) {
             return false
         }
-        if (!userMap.containsKey(user.id)) {
-            userMap.insert(user.id, user);
-            return true
+        if (userMap.containsKey(userHash)) {
+            return false
         };
-        return false
+        userMap.insert(userHash, user);
+        return true
     }),
 
-    login: query([text, text], bool, (userId, userPw) => {
-        if (userMap.containsKey(userId)) {
-            let u = userMap.get(userId);
-            if (u.Some?.pw == userPw) {
-                return true
-            } else {
-                return false
-            }
-        } else {
+    login: query([UserHashElement], bool, (userHashElement) => {
+        let userHash = getUserHash(userHashElement)
+        if (!userMap.containsKey(userHash)) {
             return false
         }
+        return true
     }),
 
     
