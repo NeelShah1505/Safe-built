@@ -68,6 +68,18 @@ function getUserHash(userHashElement: UserHashElement) : text{
     return userHash
 }
 
+function encryptFile(file : File) : File {
+    file.contents  = `${file.contents}encrypt`
+    return file
+}
+
+function decryptFile(file : File) : File {
+    if (file.contents.endsWith('encrypt')) {
+        file.contents = file.contents.slice(0, -8);
+    }
+    return file
+} 
+
 export default Canister({
     uploadFile: update([text, text, nat8, UserHashElement], bool, (fileTitle, fileContents, fileAuth, userHashElement) => {
         let userHash = getUserHash(userHashElement)
@@ -76,6 +88,7 @@ export default Canister({
         }
         if (!fileMap.containsKey(fileTitle)) {
             let file : File = {index : fileIndex, title : fileTitle, contents : fileContents, auth : fileAuth};
+            // file = encryptFile(file);
             fileIndex += 1n;
             fileMap.insert(fileTitle, file);
             return true
@@ -91,6 +104,7 @@ export default Canister({
         if (fileMap.get(fileTitle).Some!.auth <= userMap.get(userHash).Some!.auth) {
             return None
         }
+        // let file = decryptFile(fileMap.get(fileTitle).Some!)
         addFileAccessLog(fileTitle, userHashElement)
         return fileMap.get(fileTitle)
     }),
