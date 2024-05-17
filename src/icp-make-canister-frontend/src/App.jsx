@@ -9,6 +9,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [isUserLogin, setIsUserLogin] = useState(false);
   const [userId, setUserId] = useState('');
+  const [userPw, setUserPw] = useState('');
   const [fileContents, setFileContents] = useState('');
   const [identity, setIdentity] = useState('');
   const [isIdentityLogin, setIsIdentityLogin] = useState(false);
@@ -36,6 +37,7 @@ function App() {
     const userAuth = event.target.elements.register_auth.valueAsNumber;
     icp_make_canister_backend.registerUser({identity : identity, userId: userId, userPw: userPw}, userAuth).then((isRegistered) => {
       setMessage(`${userId} user is registered? : ${isRegistered}`);
+      console.log(`${userId} user is registered? : ${isRegistered}`);
     });
     return false;
   };
@@ -47,12 +49,15 @@ function App() {
     }
     const userId = event.target.elements.login_id.value;
     const userPw = event.target.elements.login_pw.value;
-    console.log("hash :", sha256(userId));
-    icp_make_canister_backend.login(userId, userPw).then((isUserLogin) => {
+    icp_make_canister_backend.login({identity, userId, userPw}).then((isUserLogin) => {
       if (isUserLogin){
+        console.log("login success");
         setUserId(userId)
+        setUserPw(userPw)
       } else {
+        console.log("login failed");
         setUserId('');
+        setUserPw('')
       };
       setIsUserLogin(isUserLogin);
     });
@@ -67,8 +72,8 @@ function App() {
     const fileContents = event.target.elements.upload_file_contents.value;
     const fileAuth = event.target.elements.upload_file_auth.valueAsNumber;
     if (isUserLogin) {
-      icp_make_canister_backend.uploadFile(fileTitle, fileContents, fileAuth, userId).then((isUploaded) => {
-        console.log("isUploaded? ",isUploaded )
+      icp_make_canister_backend.uploadFile(fileTitle, fileContents, fileAuth, {identity, userId, userPw}).then((isUploaded) => {
+        console.log("upload success? ",isUploaded )
       });
     };
    
@@ -81,18 +86,18 @@ function App() {
     }
     const fileTitle = event.target.elements.read_file_title.value;
     if (isUserLogin) {
-      icp_make_canister_backend.readFile(fileTitle, userId).then((file) => {
+      icp_make_canister_backend.readFile(fileTitle, {identity, userId, userPw}).then((file) => {
         if (file.length > 0) {
           console.log("file",file);
           setFileContents(file[0].contents);
         } else {
-          // console.log("can't read file")
+          console.log("can't read file")
           setFileContents("can't read file");
         }
       });
     } else {
+      console.log("can't read file")
       setFileContents("can't read file");
-      // console.log("can't read file")
     }
   };
 
@@ -111,7 +116,7 @@ function App() {
       </div>
       {isIdentityLogin ? 
       <div>
-        <p>Identity : ${identity}</p>
+        <p>Identity : {identity}</p>
         <div className="form-section">
           <h2>Register User</h2>
           <form onSubmit={registerUser}>
