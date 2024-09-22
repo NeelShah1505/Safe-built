@@ -1,30 +1,19 @@
 {
   "canisters": {
-    "icp-make-canister-backend": {
-      "build": "npx azle icp-make-canister-backend",
-      "candid": "src/icp-make-canister-backend/icp-make-canister-backend.did",
-      "gzip": true,
-      "main": "src/icp-make-canister-backend/src/index.ts",
-      "tech_stack": {
-        "cdk": {
-          "azle": {}
-        },
-        "language": {
-          "typescript": {}
-        }
-      },
-      "type": "custom",
-      "wasm": ".azle/icp-make-canister-backend/icp-make-canister-backend.wasm"
+    "BlockHero_backend": {
+      "candid": "src/BlockHero_backend/BlockHero_backend.did",
+      "package": "BlockHero_backend",
+      "type": "rust"
     },
-    "icp-make-canister-frontend": {
+    "BlockHero_frontend": {
       "dependencies": [
-        "icp-make-canister-backend"
+        "BlockHero_backend"
       ],
       "source": [
-        "src/icp-make-canister-frontend/dist"
+        "src/BlockHero_frontend/dist"
       ],
       "type": "assets",
-      "workspace": "icp-make-canister-frontend"
+      "workspace": "BlockHero_frontend"
     }
   },
   "defaults": {
