@@ -1,0 +1,13 @@
+service : {
+  check_user_registered : () -> (bool) query;
+  delete_file : () -> ();
+  get : () -> (nat) query;
+  increment : () -> ();
+  login : () -> (bool) query;
+  read_file : () -> () query;
+  read_logs : () -> () query;
+  register_user : () -> ();
+  set : (nat) -> ();
+  update_file : () -> ();
+  upload_file : () -> ();
+}

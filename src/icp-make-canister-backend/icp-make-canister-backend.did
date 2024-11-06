@@ -1,7 +1,0 @@
-service: () -> {
-    getFileAccessLogs: () -> (vec text) query;
-    login: (record {userId:text; userPw:text; identity:text}) -> (bool) query;
-    readFile: (text, record {userId:text; userPw:text; identity:text}) -> (opt record {title:text; contents:text; auth:nat8; index:nat64});
-    registerUser: (record {userId:text; userPw:text; identity:text}, nat8) -> (bool);
-    uploadFile: (text, text, nat8, record {userId:text; userPw:text; identity:text}) -> (bool);
-}

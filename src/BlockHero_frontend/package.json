@@ -1,10 +1,10 @@
 {
-  "name": "icp-make-canister-frontend",
+  "name": "BlockHero_frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "setup": "npm i && dfx canister create icp-make-canister-backend && dfx generate icp-make-canister-backend && dfx deploy",
+    "setup": "npm i && dfx canister create BlockHero_backend && dfx generate BlockHero_backend && dfx deploy",
     "start": "vite --port 3000",
     "prebuild": "dfx generate",
     "build": "tsc && vite build",
@@ -13,9 +13,9 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@dfinity/agent": "^0.15.7",
-    "@dfinity/candid": "^0.15.7",
-    "@dfinity/principal": "^0.15.7"
+    "@dfinity/agent": "^1.4.0",
+    "@dfinity/candid": "^1.4.0",
+    "@dfinity/principal": "^1.4.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.14",
