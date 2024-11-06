@@ -21,12 +21,6 @@ dfx help
 dfx canister --help
 ```
 
-## Generate candid file
-```bash
-cargo build --release --target wasm32-unknown-unknown --package BlockHero_backend && \
-candid-extractor target/wasm32-unknown-unknown/release/BlockHero_backend.wasm > src/BlockHero_backend/BlockHero_backend.did
-```
-
 ## Running the project locally
 
 If you want to test your project locally, you can use the following commands:
