@@ -55,6 +55,10 @@ fn read_logs() {
 
 
 
+#[query]
+fn greet(say: String) -> String {
+  return say
+}
 
 
 
