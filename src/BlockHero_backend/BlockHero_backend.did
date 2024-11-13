@@ -2,6 +2,7 @@ service : {
   check_user_registered : () -> (bool) query;
   delete_file : () -> ();
   get : () -> (nat) query;
+  greet : (text) -> (text) query;
   increment : () -> ();
   login : () -> (bool) query;
   read_file : () -> () query;
