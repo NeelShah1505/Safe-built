@@ -2,11 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // 페이지 이동을 위한 hook
 import { BlockHero_backend } from 'declarations/BlockHero_backend';
 import { AuthClient } from '@dfinity/auth-client';
+import { useIdentity } from './IdentityContext';
+
+
 
 function App() {
   const [greeting, setGreeting] = useState('');
-  const [identity, setIdentity] = useState('');
-  const [isIdentityLogin, setIsIdentityLogin] = useState(false);
+  // const [identity, setIdentity] = useState('');
+  // const [isIdentityLogin, setIsIdentityLogin] = useState(false);
+  const { identity, isIdentityLogin, updateIdentity } = useIdentity();
+
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -23,9 +28,10 @@ function App() {
       identityProvider: "https://identity.ic0.app/#authorize",
       onSuccess: async () => {
         const identity = authClient.getIdentity();
+        updateIdentity(identity.getPrincipal().toString());
         console.log(identity.getPrincipal().toString());
-        setIdentity(identity.getPrincipal().toString())
-        setIsIdentityLogin(true);
+        // setIdentity(identity.getPrincipal().toString())
+        // setIsIdentityLogin(true);
       },
     });
   }
