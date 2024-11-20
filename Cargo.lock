@@ -8,7 +8,9 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chrono",
+ "hex",
  "ic-cdk",
+ "serde",
  "sha2",
 ]
 

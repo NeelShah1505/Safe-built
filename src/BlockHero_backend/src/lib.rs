@@ -5,7 +5,15 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use sha2::{Digest, Sha256};
 use ic_cdk::api::time;
+use std::sync::Mutex;
+use types::{
+    CanisterId, VetKDCurve, VetKDEncryptedKeyReply, VetKDEncryptedKeyRequest, VetKDKeyId,
+    VetKDPublicKeyReply, VetKDPublicKeyRequest,
+};
 
+mod types;
+
+const VETKD_SYSTEM_API_CANISTER_ID: &str = "s55qq-oqaaa-aaaaa-aaakq-cai";
 
 thread_local! {
     pub static USER_INFO_MAP: RefCell<BTreeMap<Principal, String>> = RefCell::new(BTreeMap::new());
@@ -15,6 +23,7 @@ thread_local! {
     pub static FILE_AUTHORITY_MAP: RefCell<BTreeMap<String, u8>> = RefCell::new(BTreeMap::new());
 
     pub static LOGS: RefCell<Vec<(String, Principal, String, String, String)>> = RefCell::new(Vec::new());
+
 }
 
 // Helper function for hashing
