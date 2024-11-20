@@ -7,8 +7,18 @@ function Page({ logs }) {
             {logs.length > 0 ? (
                 <ul style={{ listStyleType: 'none', padding: 0 }}>
                     {logs.map((log, index) => (
-                        <li key={index} style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '5px' }}>
-                            <strong>{log.user}</strong>님이 <strong>{log.fileName}</strong> 파일을 {log.action === "uploaded" ? "업로드" : "읽기"}했습니다. <br />
+                        <li
+                            key={index}
+                            style={{
+                                marginBottom: '10px',
+                                padding: '10px',
+                                backgroundColor: '#f9f9f9',
+                                borderRadius: '5px',
+                            }}
+                        >
+                            <strong>{log.user}</strong>님이{' '}
+                            <strong>{log.fileName}</strong> 파일을{' '}
+                            {log.action === 'uploaded' ? '업로드했습니다' : '읽었습니다'}. <br />
                             <small style={{ color: '#888' }}>{log.timestamp}</small>
                         </li>
                     ))}
