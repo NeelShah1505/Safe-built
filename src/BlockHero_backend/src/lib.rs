@@ -3,120 +3,103 @@ use candid::types::principal::Principal;
 use ic_cdk::{query, update};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use sha2::{Digest, Sha256};
+use ic_cdk::api::time;
+
 
 thread_local! {
-  static COUNTER: RefCell<Nat> = RefCell::new(Nat::from(0 as u32));
+    pub static USER_INFO_MAP: RefCell<BTreeMap<Principal, String>> = RefCell::new(BTreeMap::new());
+    pub static USER_AUTHORITY_MAP: RefCell<BTreeMap<Principal, u8>> = RefCell::new(BTreeMap::new());
 
-  pub static USER_INFO_MAP: RefCell<BTreeMap<Principal, String>> = RefCell::new(BTreeMap::new());
-  pub static USER_ATHORITY_MAP: RefCell<BTreeMap<Principal, String>> = RefCell::new(BTreeMap::new());
+    pub static FILE_MAP: RefCell<BTreeMap<String, String>> = RefCell::new(BTreeMap::new());
+    pub static FILE_AUTHORITY_MAP: RefCell<BTreeMap<String, u8>> = RefCell::new(BTreeMap::new());
 
-  pub static FILE_MAP: RefCell<BTreeMap<String, String>> = RefCell::new(BTreeMap::new());
-  pub static FILE_ATHORITY_MAP: RefCell<BTreeMap<String, String>> = RefCell::new(BTreeMap::new());
+    pub static LOGS: RefCell<Vec<(String, Principal, String, String, String)>> = RefCell::new(Vec::new());
 }
 
-// user 관련
+// Helper function for hashing
+fn hash(input: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(input);
+    format!("{:x}", hasher.finalize())
+}
+
+// User-related functions
 #[update]
-fn register_user(identity: Principal, user_id: String, user_pw: String) {
-  // icp identity와 user id 및 pw, 권한을 param으로 받음
+fn register_user(identity: Principal, user_id: String, user_pw: String, user_athority: u8) {
+    let hashed_id = hash(&(identity.to_text() + &user_id));
+    let hashed_pw = hash(&(identity.to_text() + &user_pw));
+    let final_hash = hash(&(hashed_id + &hashed_pw));
 
-  // id와 icp identity 해시 함수 돌린 결과 -> a 
-  // pw와 icp identity 해시 함수 돌린 결과 -> b
-  // a와 b를 해시 함수 돌린 결과 -> c
-  // 테이블에 저장 -> key : identity, value :  c 를 저장
-  // 테이블에 저장 -> key : identity, value : 유저 권한
-
+    USER_INFO_MAP.with(|map| map.borrow_mut().insert(identity.clone(), final_hash));
+    USER_AUTHORITY_MAP.with(|map| map.borrow_mut().insert(identity, user_athority)); // 기본 권한 0 (최고 권한)
 }
 
 #[query]
-fn check_user_registered() -> bool {
-  // identity를 param으로 받음
-  //둣identity를 key로 테이블 검색했을 때 있으면 true, 없으면 false
-
-  true
+fn check_user_registered(identity: Principal) -> bool {
+    USER_INFO_MAP.with(|map| map.borrow().contains_key(&identity))
 }
 
 #[query]
-fn login() -> bool {
-  // login에 필요한 값 주고, login 성공? 실패?
+fn login(identity: Principal, user_id: String, user_pw: String) -> bool {
+    let hashed_id = hash(&(identity.to_text() + &user_id));
+    let hashed_pw = hash(&(identity.to_text() + &user_pw));
+    let final_hash = hash(&(hashed_id + &hashed_pw));
 
-  // id와 icp identity와 pw를 param으로 받음
-
-  // id와 icp identity 해시 함수 돌린 결과 -> a 
-  // pw와 icp identity 해시 함수 돌린 결과 -> b
-  // a와 b를 해시 함수 돌린 결과 -> c
-  // identity를 key로 테이블 검색한 값과 c를 비교해서 같으면 true, 다르면 false
-  true
+    USER_INFO_MAP.with(|map| {
+        map.borrow()
+            .get(&identity)
+            .map_or(false, |stored_hash| stored_hash == &final_hash)
+    })
 }
 
-// file 관련
+// File-related functions
 #[update]
-fn upload_file() {
-  // file의 title과 content, file 권한을 param으로 받음
-  // 테이블에 저장 -> key : file title, value : file content
-  // 테이블에 저장 -> key: file title, value : file 권한
+fn upload_file(title: String, content: String, file_authority: u8) {
+    FILE_MAP.with(|map| map.borrow_mut().insert(title.clone(), content));
+    FILE_AUTHORITY_MAP.with(|map| map.borrow_mut().insert(title, file_authority));
 }
 
 #[query]
-fn read_file() {
-  // file title과 icp identity를 param으로 받음
+fn read_file(title: String, identity: Principal) -> String {
+    let file_auth = FILE_AUTHORITY_MAP.with(|map| map.borrow().get(&title).cloned());
+    let user_auth = USER_AUTHORITY_MAP.with(|map| map.borrow().get(&identity).cloned());
 
-  // 테이블에서 file title로 file 권한 가져 옴
-  // 테이블에서 identy로 user 권한 가져 옴
-  // 둘 비교해서 file 권한 숫자가 user 권한 숫자보다 작으면 읽기 실패(숫자가 작을 수록 권한 쎔. 0이 제일 쎔)
+    match (file_auth, user_auth) {
+        (Some(file_auth), Some(user_auth)) if user_auth <= file_auth => {
+            let content = FILE_MAP.with(|map| map.borrow().get(&title).cloned().unwrap_or_default());
 
-  // 테이블에서 key값으로 file title을 검색한 결과를 전달. 없으면 빈 string
-
-  // 아, 그리고 읽은 history를 기록해야 함
-  // 읽은 시간, 읽은 사람 identity, user id, 파일 title 을 history에 추가
-  // create_log() 함수 만들어서 써야 하나? 그냥 여기 구현해도 되나?
+            create_log(identity.clone(), title.clone(), "READ".to_string());
+            content
+        }
+        _ => "".to_string(),
+    }
 }
 
+fn create_log(identity: Principal, title: String, action: String) {
+     // Get the current timestamp in nanoseconds
+     let timestamp_nanos = time();
+     // Convert nanoseconds to seconds
+     let timestamp_secs = timestamp_nanos / 1_000_000_000;
+     // Format the timestamp as a human-readable string
+     let timestamp = format!("{}", timestamp_secs);
+    let user_id = USER_INFO_MAP.with(|map| map.borrow().get(&identity).cloned().unwrap_or_default());
 
-#[update] // 이건 구현 x
-fn update_file() {
-
-}
-
-#[update] // 이것도 구현 x
-fn delete_file() {
-
-}
-
-fn create_log() {
-
+    LOGS.with(|logs| {
+        logs.borrow_mut()
+            .push((timestamp, identity, user_id, title, action));
+    });
 }
 
 #[query]
-fn read_logs() {
-  // limit과 시간 순서 옵션(최근 순, 오래된 순)을 파라미터롤 받음
-  // logs 에서 위 조건에 맞게 배열로 넘겨 줌
-}
-
-
-
-
-#[query]
-fn greet(say: String) -> String {
-  return say
-}
-
-
-
-/// Get the value of the counter.
-#[query]
-fn get() -> Nat {
-  COUNTER.with(|counter| counter.borrow().clone())
-}
-
-/// Set the value of the counter.
-#[update]
-fn set(n: Nat) {
-  COUNTER.with(|counter| *counter.borrow_mut() = n);
-}
-
-#[update]
-fn increment() {
-  COUNTER.with(|counter| *counter.borrow_mut() += 1 as u32);
+fn read_logs(limit: usize, order: String) -> Vec<(String, Principal, String, String, String)> {
+    LOGS.with(|logs| {
+        let mut logs = logs.borrow().clone();
+        if order.to_lowercase() == "recent" {
+            logs.reverse();
+        }
+        logs.into_iter().take(limit).collect()
+    })
 }
 
 ic_cdk::export_candid!();
