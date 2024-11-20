@@ -8,9 +8,9 @@ export function UserProvider({ children }) {
   const [userId, setUserId] = useState('');
   const [isUserLogin, setIsUserLogin] = useState(false);
 
-  const updateUserId = (newIdentity) => {
-    setUserId(newIdentity);
-    setIsUserLogin(!!newIdentity);
+  const updateUserId = (newUserId) => {
+    setUserId(newUserId);
+    setIsUserLogin(!!newUserId);
   };
 
   return (

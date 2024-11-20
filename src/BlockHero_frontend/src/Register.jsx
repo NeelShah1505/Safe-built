@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIdentity } from './IdentityContext';
+import { registerUser } from './api';
+import { Principal } from "@dfinity/principal";
 
-function Register({ onRegister }) {
+
+function Register() {
+    const { identity, isIdentityLogin, updateIdentity } = useIdentity();
     const [id, setId] = useState('');
     const [pw, setPw] = useState('');
+    const [authority, setAthority] = useState(0);
     const navigate = useNavigate();
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (id && pw) {
-            onRegister(id, pw);
+            const identityPrincipal = typeof identity === "string" ? Principal.fromText(identity) : identity;
+            const authorityNat8 = Number(authority);
+            if (authorityNat8 < 0 || authorityNat8 > 255) {
+                alert("권한 값은 0에서 255 사이여야 합니다.");
+                return;
+            }
+
+            await registerUser(identityPrincipal, id, pw, authorityNat8);
             alert("등록되었습니다!");
             navigate('/login');
         } else {
@@ -19,27 +32,47 @@ function Register({ onRegister }) {
     return (
         <div style={styles.container}>
             <div style={styles.registerBox}>
-                <h2 style={styles.title}>Register</h2>
-                <input
-                    type="text"
-                    placeholder="ID"
-                    value={id}
-                    onChange={(e) => setId(e.target.value)}
-                    style={styles.input}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={pw}
-                    onChange={(e) => setPw(e.target.value)}
-                    style={styles.input}
-                />
-                <button onClick={handleRegister} style={styles.button}>
-                    Register
-                </button>
-                <button onClick={() => navigate('/login')} style={{ ...styles.button, backgroundColor: '#6c757d' }}>
-                    Back to Login
-                </button>
+                {isIdentityLogin ? 
+                    <div>
+                        <p>Identity : {identity}</p>
+                        <h2 style={styles.title}>Register</h2>
+                        <input
+                            type="text"
+                            placeholder="ID"
+                            value={id}
+                            onChange={(e) => setId(e.target.value)}
+                            style={styles.input}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={pw}
+                            onChange={(e) => setPw(e.target.value)}
+                            style={styles.input}
+                        />
+                        <input
+                            type="number"
+                            placeholder="Authority"
+                            value={authority}
+                            onChange={(e) => setAthority(e.target.value)}
+                            style={styles.input}
+                            min={0}
+                            max={10}
+                            step="1" 
+                        />
+                        <button onClick={handleRegister} style={styles.button}>
+                            Register
+                        </button>
+                        <button onClick={() => navigate('/login')} style={{ ...styles.button, backgroundColor: '#6c757d' }}>
+                            Back to Login
+                        </button>
+                    </div>
+                : 
+                    <div>
+
+                    </div>
+                }
+
             </div>
         </div>
     );
