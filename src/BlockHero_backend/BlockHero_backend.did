@@ -1,14 +1,10 @@
 service : {
-  check_user_registered : () -> (bool) query;
-  delete_file : () -> ();
-  get : () -> (nat) query;
-  greet : (text) -> (text) query;
-  increment : () -> ();
-  login : () -> (bool) query;
-  read_file : () -> () query;
-  read_logs : () -> () query;
-  register_user : () -> ();
-  set : (nat) -> ();
-  update_file : () -> ();
-  upload_file : () -> ();
+  check_user_registered : (principal) -> (bool) query;
+  login : (principal, text, text) -> (bool) query;
+  read_file : (text, principal) -> (text) query;
+  read_logs : (nat64, text) -> (
+      vec record { text; principal; text; text; text },
+    ) query;
+  register_user : (principal, text, text, nat8) -> ();
+  upload_file : (text, text, nat8) -> ();
 }

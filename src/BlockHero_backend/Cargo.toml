@@ -8,7 +8,15 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[package.metadata.cargo-watch]
+build = [
+  "cargo build --target wasm32-unknown-unknown --release",
+  "ic-cdk-optimizer target/wasm32-unknown-unknown/release/BlockHero_backend.wasm -o target/wasm32-unknown-unknown/release/BlockHero_backend-opt.wasm"
+]
+
 [dependencies]
 candid = "0.10"
 ic-cdk = "0.16"
-ic-cdk-timers = "0.10" # Feel free to remove this dependency if you don't need timers
+sha2 = "0.10"
+chrono = "0.4"  # 최신 버전 사용
+
