@@ -17,21 +17,21 @@ function Home({ onLogout, addLog }) {
                 ...prevFiles,
                 [fileTitle]: fileContent,
             }));
-            addLog('uploaded', fileTitle); // 업로드 로그 기록
-            alert('파일이 업로드되었습니다.');
+            addLog('uploaded', fileTitle); // Log file upload
+            alert('File has been uploaded.');
             setFileTitle('');
             setFileContent('');
         } else {
-            alert('파일 제목과 내용을 입력하세요.');
+            alert('Please enter a file title and content.');
         }
     };
 
     const handleRead = () => {
         if (uploadedFiles[readTitle]) {
             setDisplayContent(uploadedFiles[readTitle]);
-            addLog('read', readTitle); // 읽기 로그 기록
+            addLog('read', readTitle); // Log file read
         } else {
-            setDisplayContent("해당 제목의 파일이 없습니다.");
+            setDisplayContent("No file found with that title.");
         }
     };
 
@@ -41,21 +41,21 @@ function Home({ onLogout, addLog }) {
 
     return (
         <div className="container mx-auto p-4 max-w-lg">
-            <h1 className="text-2xl font-bold mb-4">메인 페이지</h1>
-            
-            {/* 파일 업로드 섹션 */}
+            <h1 className="text-2xl font-bold mb-4">Home Page</h1>
+
+            {/* File Upload Section */}
             <div className="mb-8 p-4 border border-gray-300 shadow-md rounded-md">
-                <h2 className="text-xl font-bold mb-4">파일 업로드</h2>
+                <h2 className="text-xl font-bold mb-4">Upload File</h2>
                 <input
                     type="text"
-                    placeholder="파일 제목 입력"
+                    placeholder="Enter file title"
                     value={fileTitle}
                     onChange={(e) => setFileTitle(e.target.value)}
                     className="p-2 border border-gray-300 rounded mb-2 w-full"
                 />
                 <input
                     type="text"
-                    placeholder="파일 내용 입력"
+                    placeholder="Enter file content"
                     value={fileContent}
                     onChange={(e) => setFileContent(e.target.value)}
                     className="p-2 border border-gray-300 rounded mb-2 w-full"
@@ -65,12 +65,12 @@ function Home({ onLogout, addLog }) {
                 </button>
             </div>
 
-            {/* 파일 읽기 섹션 */}
+            {/* File Read Section */}
             <div className="p-4 border border-gray-300 shadow-md rounded-md">
-                <h2 className="text-xl font-bold mb-4">파일 읽기</h2>
+                <h2 className="text-xl font-bold mb-4">Read File</h2>
                 <input
                     type="text"
-                    placeholder="파일 제목 입력"
+                    placeholder="Enter file title"
                     value={readTitle}
                     onChange={(e) => setReadTitle(e.target.value)}
                     className="p-2 border border-gray-300 rounded mb-2 w-full"
@@ -79,16 +79,16 @@ function Home({ onLogout, addLog }) {
                     Read File
                 </button>
                 <div className="p-2 border border-gray-300 bg-gray-100 rounded h-16">
-                    {displayContent || '파일 내용을 확인하세요.'}
+                    {displayContent || 'Please check the file content.'}
                 </div>
             </div>
 
-            {/* Page.js로 이동 버튼 */}
+            {/* Navigate to Page.js */}
             <button onClick={goToPage} className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600 mt-4">
                 Check Log
             </button>
-            
-            {/* 로그아웃 버튼 */}
+
+            {/* Logout Button */}
             <button onClick={onLogout} className="w-full p-2 bg-red-500 text-white rounded hover:bg-red-600 mt-4">
                 Logout
             </button>
